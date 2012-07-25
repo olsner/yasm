@@ -1059,6 +1059,27 @@ x86_match_error(x86_id_insn *id_insn, yasm_insn_operand **ops,
 }
 
 static void
+x86_check_ea_seg(x86_insn *insn, yasm_insn_operand *op, int mode_bits)
+{
+    yasm_effaddr* ea = op->data.ea;
+
+    if (op->seg)
+        yasm_error_set(YASM_ERROR_VALUE,
+            N_("invalid segment in effective address"));
+
+    if (mode_bits == 64 &&
+        ea->segreg &&
+        ea->segreg != 0x6404 &&
+        ea->segreg != 0x6505) {
+
+        yasm_warn_set(YASM_WARN_GENERAL,
+                      N_("`%s' segment register ignored in %u-bit mode"),
+                      yasm_x86__get_segreg_name(ea->segreg),
+                      mode_bits);
+    }
+}
+
+static void
 x86_id_insn_finalize(yasm_bytecode *bc, yasm_bytecode *prev_bc)
 {
     x86_id_insn *id_insn = (x86_id_insn *)bc->contents;
@@ -1268,10 +1289,11 @@ x86_id_insn_finalize(yasm_bytecode *bc, yasm_bytecode *prev_bc)
                             yasm_internal_error(
                                 N_("invalid operand conversion"));
                         case YASM_INSN__OPERAND_MEMORY:
-                            if (op->seg)
-                                yasm_error_set(YASM_ERROR_VALUE,
-                                    N_("invalid segment in effective address"));
                             insn->x86_ea = (x86_effaddr *)op->data.ea;
+                            /* Emit warnings and errors for invalid or ignored
+                             * segment overrides. */
+                            x86_check_ea_seg(insn, op, mode_bits);
+
                             if (info_ops[i].type == OPT_MemOffs)
                                 /* Special-case for MOV MemOffs instruction */
                                 yasm_x86__ea_set_disponly(insn->x86_ea);

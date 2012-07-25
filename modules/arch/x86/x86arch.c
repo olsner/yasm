@@ -572,11 +572,17 @@ x86_reg_print(yasm_arch *arch, uintptr_t reg, FILE *f)
     }
 }
 
+const char*
+yasm_x86__get_segreg_name(uintptr_t segreg)
+{
+    static const char *name[] = {"es","cs","ss","ds","fs","gs"};
+    return name[segreg&7];
+}
+
 static void
 x86_segreg_print(yasm_arch *arch, uintptr_t segreg, FILE *f)
 {
-    static const char *name[] = {"es","cs","ss","ds","fs","gs"};
-    fprintf(f, "%s", name[segreg&7]);
+    fprintf(f, "%s", yasm_x86__get_segreg_name(segreg));
 }
 
 /* Define x86 machines -- see arch.h for details */

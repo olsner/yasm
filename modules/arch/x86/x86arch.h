@@ -319,6 +319,7 @@ int yasm_x86__intnum_tobytes
      int warn);
 
 unsigned int yasm_x86__get_reg_size(uintptr_t reg);
+const char* yasm_x86__get_segreg_name(uintptr_t segreg);
 
 /*@only@*/ yasm_bytecode *yasm_x86__create_empty_insn(yasm_arch *arch,
                                                       unsigned long line);
