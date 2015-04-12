@@ -934,6 +934,9 @@ x86_bc_insn_tobytes(yasm_bytecode *bc, unsigned char **bufp,
     return 0;
 }
 
+static int bytes_are_zero(const unsigned char *p, size_t n)
+{ while (n--) if (*p++) return 0; return 1; }
+
 static int
 x86_bc_jmp_tobytes(yasm_bytecode *bc, unsigned char **bufp,
                    unsigned char *bufstart, void *d,
@@ -941,6 +944,7 @@ x86_bc_jmp_tobytes(yasm_bytecode *bc, unsigned char **bufp,
                    /*@unused@*/ yasm_output_reloc_func output_reloc)
 {
     x86_jmp *jmp = (x86_jmp *)bc->contents;
+    yasm_symrec *rel = jmp->target.rel;
     unsigned char opersize;
     unsigned int i;
     /*@only@*/ yasm_intnum *delta;
@@ -974,8 +978,6 @@ x86_bc_jmp_tobytes(yasm_bytecode *bc, unsigned char **bufp,
                                      yasm_expr_expr(jmp->target.abs),
                                      yasm_expr_int(delta), bc->line);
 
-            yasm_symrec *rel = jmp->target.rel;
-
             jmp->target.size = 8;
             jmp->target.sign = 1;
             if (output_value(&jmp->target, *bufp, 1,
@@ -984,7 +986,7 @@ x86_bc_jmp_tobytes(yasm_bytecode *bc, unsigned char **bufp,
             /* If the offset produced is 0, this was an unnecessary jump. */
             if (!**bufp) {
                 yasm_warn_set(YASM_WARN_NONSHORT_JUMP,
-                        N_("Zero jump offset to %s"),
+                        N_("Zero (short) jump offset to %s"),
                         rel ? yasm_symrec_get_name(rel) : "(null)");
             }
             *bufp += 1;
@@ -1019,6 +1021,11 @@ x86_bc_jmp_tobytes(yasm_bytecode *bc, unsigned char **bufp,
             if (output_value(&jmp->target, *bufp, i,
                              (unsigned long)(*bufp-bufstart), bc, 1, d))
                 return 1;
+            if (bytes_are_zero(*bufp, i)) {
+                yasm_warn_set(YASM_WARN_NONSHORT_JUMP,
+                        N_("Zero (long) jump offset to %s"),
+                        rel ? yasm_symrec_get_name(rel) : "(null)");
+            }
             *bufp += i;
             break;
         case JMP_NONE:
