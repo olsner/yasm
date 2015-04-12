@@ -1078,6 +1078,8 @@ opt_warning_handler(char *cmd, /*@unused@*/ char *param, int extra)
         action(YASM_WARN_UNINIT_CONTENTS);
     else if (strcmp(cmd, "size-override") == 0)
         action(YASM_WARN_SIZE_OVERRIDE);
+    else if (strcmp(cmd, "long-jumps") == 0)
+        action(YASM_WARN_NONSHORT_JUMP);
     else
         return 1;
 

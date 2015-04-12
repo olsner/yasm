@@ -775,6 +775,9 @@ x86_bc_jmp_expand(yasm_bytecode *bc, int span, long old_val, long new_val,
     if (jmp->op_sel == JMP_NEAR)
         yasm_internal_error(N_("trying to expand an already-near jump"));
 
+    yasm_warn_set(YASM_WARN_NONSHORT_JUMP, N_("Expanding jump to %s"),
+            yasm_symrec_get_name(jmp->target.rel));
+
     /* Upgrade to a near jump */
     jmp->op_sel = JMP_NEAR;
     bc->len -= jmp->shortop.len + 1;
@@ -971,11 +974,19 @@ x86_bc_jmp_tobytes(yasm_bytecode *bc, unsigned char **bufp,
                                      yasm_expr_expr(jmp->target.abs),
                                      yasm_expr_int(delta), bc->line);
 
+            yasm_symrec *rel = jmp->target.rel;
+
             jmp->target.size = 8;
             jmp->target.sign = 1;
             if (output_value(&jmp->target, *bufp, 1,
                              (unsigned long)(*bufp-bufstart), bc, 1, d))
                 return 1;
+            /* If the offset produced is 0, this was an unnecessary jump. */
+            if (!**bufp) {
+                yasm_warn_set(YASM_WARN_NONSHORT_JUMP,
+                        N_("Zero jump offset to %s"),
+                        rel ? yasm_symrec_get_name(rel) : "(null)");
+            }
             *bufp += 1;
             break;
         case JMP_NEAR_FORCED:
