@@ -11,10 +11,10 @@ x86parse.c
 lc3bid.c
 re2c-parser.c
 re2c-parser.h
-yasm
-vsyasm
-ytasm
-re2c
+/yasm
+/vsyasm
+/ytasm
+/re2c
 cleanup
 genmacro
 test_hd
