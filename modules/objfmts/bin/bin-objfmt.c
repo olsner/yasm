@@ -540,6 +540,8 @@ typedef struct map_output_info {
 
     yasm_object *object;    /* object */
     FILE *f;                /* map output file */
+
+    yasm_errwarns *errwarns;
 } map_output_info;
 
 static int
@@ -676,7 +678,15 @@ map_symrec_output(yasm_symrec *sym, void *d)
         yasm_expr *realequ = yasm_expr_copy(equ);
         realequ = yasm_expr__level_tree
             (realequ, 1, 1, 1, 0, bin_objfmt_expr_xform, NULL);
-        yasm_intnum_set(info->intn, yasm_expr_get_intnum(&realequ, 0));
+        yasm_intnum* intval = yasm_expr_get_intnum(&realequ, 0);
+//        if (!intval) {
+//            yasm_error_set(YASM_ERROR_TOO_COMPLEX,
+//                           N_("EQU expression is too complex"));
+//            yasm_errwarn_propagate(info->errwarns, realequ->line);
+//            yasm_xfree(name);
+//            return 1;
+//        }
+        yasm_intnum_set(info->intn, intval);
         yasm_expr_destroy(realequ);
         map_print_intnum(info->intn, info);
         fprintf(info->f, "  %s\n", name);
@@ -759,6 +769,7 @@ output_map(bin_objfmt_output_info *info)
         }
     }
 
+    mapinfo.errwarns = info->errwarns;
     mapinfo.object = info->object;
     mapinfo.f = f;
 
